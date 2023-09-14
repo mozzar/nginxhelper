@@ -4,9 +4,7 @@ import subprocess
 from lib.RepeatedTimer import RepeatedTimer
 from colorama import Fore, Back, Style
 from datetime import datetime
-
-nginx_conf_location = '/etc/nginx/conf.d'
-hostsFileLocation = '/etc/hosts'
+from lib.Settings import Settings
 
 class MainWindow:
     # name = []
@@ -18,13 +16,31 @@ class MainWindow:
         self.activeServices = []
         self.inactiveServices = []
         self.nginxStatus = ""
-        self.mapDict = {
+        settingsClass = Settings()
+        self.mapDict = settingsClass.get_setting('hosts_dict')
+        self.hosts_file_location = settingsClass.get_setting('hosts_file_location')
+        self.nginx_config_location = settingsClass.get_setting('nginx_config_location')
 
-        }
 
     def initializeWindow(self):
 
         self.updateNginxData()
+
+        generateButtons = [
+                    [sg.Text('Opcje')],
+                ]
+        keys = self.mapDict.keys()
+        for key in keys:
+            name = key.upper()
+            generateButtons.append([
+                        sg.Frame(name, [
+
+                            [sg.Button('Włącz ' + name, key='enable' + name)],
+                            [sg.HorizontalSeparator()],
+                            [sg.Button('Wyłącz ' + name, key='disable' + name)],
+
+                        ], expand_x=True)
+                    ])
         self.layout = [
             [
                 sg.Column([
@@ -53,62 +69,20 @@ class MainWindow:
                     [sg.Multiline(expand_x=True, expand_y=True, key='output', disabled=True)],
                     [sg.Button('Wyjdź', key='exit')],
                 ], expand_y=True, expand_x=True),
-                sg.Column([
-                    [sg.Text('Opcje')],
-                    [
-                        sg.Frame('GLOBALNE', [
-
-                            [sg.Button('Włącz wszystkie', key='enableAll')],
-                            [sg.HorizontalSeparator()],
-                            [sg.Button('Wyłącz wszystkie', key='disableAll')],
-                        ], expand_x=True)
-                    ],
-                    [
-                        sg.Frame('AKAD', [
-
-                            [sg.Button('Włącz AKAD', key='enableAKAD')],
-                            [sg.HorizontalSeparator()],
-                            [sg.Button('Wyłącz AKAD', key='disableAKAD')],
-
-                        ], expand_x=True)
-                    ],
-
-                    [
-                        sg.Frame('ETHER', [
-
-                            [sg.Button('Włącz ETHER', key='enableETHER')],
-                            [sg.HorizontalSeparator()],
-                            [sg.Button('Wyłącz ETHER', key='disableETHER')],
-                        ], expand_x=True)
-                    ],
-                    [
-                        sg.Frame('eZasoby', [
-
-                            [sg.Button('Włącz eZasoby', key='enableeZasoby')],
-                            [sg.HorizontalSeparator()],
-                            [sg.Button('Wyłącz eZasoby', key='disableeZasoby')],
-                        ], expand_x=True)
-                    ],
-                    [
-                        sg.Frame('SCMS', [
-
-                            [sg.Button('Włącz SCMS', key='enableSCMS')],
-                            [sg.HorizontalSeparator()],
-                            [sg.Button('Wyłącz SCMS', key='disableSCMS')]
-                        ], expand_x=True)
-                    ]
-
-                ], expand_y=True, expand_x=True)
+                sg.Column(generateButtons, expand_y=True, expand_x=True)
             ],
 
         ]
+
+
+
         sg.theme('BluePurple')
         self.window = sg.Window('NGINX menu', self.layout, size=(600, 600))
         self.rt = RepeatedTimer(20, self.updateNginxData, True)
 
     def updateNginxData(self, set=False):
         print("updateNginxData\n")
-        entries = os.listdir(nginx_conf_location)
+        entries = os.listdir(self.nginx_config_location)
         # print(entries)
         active = []
         inactive = []
@@ -166,47 +140,26 @@ class MainWindow:
             if "enable" in event:
                 self.hostsFileChange('all', True)
                 event = event.lower()
-                if "akad" in event:
-                    self.enable("akad")
-                    self.hostsFileChange("akad", False)
-                elif "scms" in event:
-                    self.enable("scms")
-                    self.hostsFileChange("scms", False)
-                elif "ether" in event:
-                    self.enable("ether")
-                    self.hostsFileChange("ether", False)
-                elif "ezasoby" in event:
-                    self.enable("ezasoby")
-                    self.hostsFileChange("ezasoby", False)
-                elif "all" in event:
-                    self.enable("all")
-                    self.hostsFileChange("all", False)
+                event = event.replace('enable', '')
+                self.enable(event)
+                self.hostsFileChange(event, False)
                 self.updateNginxData(set=True)
+
             if "disable" in event:
                 event = event.lower()
-                if "akad" in event:
-                    self.disable("akad")
-                    self.hostsFileChange("akad", True)
-                elif "scms" in event:
-                    self.disable("scms")
-                    self.hostsFileChange("scms", True)
-                elif "ether" in event:
-                    self.disable("ether")
-                    self.hostsFileChange("ether", True)
-                elif "ezasoby" in event:
-                    self.disable("ezasoby")
-                    self.hostsFileChange("ezasoby", True)
-                elif "all" in event:
-                    self.disable("all")
-                    self.hostsFileChange("all", True)
+                event = event.replace('disable', '')
+                self.disable(event)
+                self.hostsFileChange(event, True)
                 self.updateNginxData(set=True)
+
+
 
         self.window.close()
 
     def enable(self, key_word):
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
-        entries = os.listdir(nginx_conf_location)
+        entries = os.listdir(self.nginx_config_location)
         print(entries)
         changes = 0
         if len(entries) > 0:
@@ -219,8 +172,8 @@ class MainWindow:
 
                         print(text)
                         self.addToOutput(text)
-                        os.rename(nginx_conf_location + '/' + entry,
-                                  nginx_conf_location + '/' + entry.replace('_backup', ''))
+                        os.rename(self.nginx_config_location + '/' + entry,
+                                  self.nginx_config_location + '/' + entry.replace('_backup', ''))
                         changes = changes + 1
                     else:
                         # text = entry + " jest już " + Fore.GREEN + " włączone" + Fore.RESET
@@ -236,8 +189,8 @@ class MainWindow:
                             text = "Włączam " + entry
                             print(text)
                             self.addToOutput(text)
-                            os.rename(nginx_conf_location + '/' + entry,
-                                      nginx_conf_location + '/' + entry.replace('_backup', ''))
+                            os.rename(self.nginx_config_location + '/' + entry,
+                                      self.nginx_config_location + '/' + entry.replace('_backup', ''))
                             changes = changes + 1
                         else:
                             # text = entry + " jest już " + Fore.GREEN + " włączone" + Fore.RESET
@@ -249,7 +202,7 @@ class MainWindow:
             subprocess.call('service nginx restart', shell=True)
 
     def disable(self, key_word):
-        entries = os.listdir(nginx_conf_location)
+        entries = os.listdir(self.nginx_config_location)
         print(entries)
         changes = 0
 
@@ -262,7 +215,7 @@ class MainWindow:
                         text = "Wyłączam " + entry
                         print(text)
                         self.addToOutput(text)
-                        os.rename(nginx_conf_location + '/' + entry, nginx_conf_location + '/' + entry + '_backup')
+                        os.rename(self.nginx_config_location + '/' + entry, self.nginx_config_location + '/' + entry + '_backup')
                         changes = changes + 1
                     else:
                         # text = entry + " jest już " + Fore.RED + "wyłączone" + Fore.RESET
@@ -278,7 +231,7 @@ class MainWindow:
                             text = "Wyłączam " + entry
                             print(text)
                             self.addToOutput(text)
-                            os.rename(nginx_conf_location + '/' + entry, nginx_conf_location + '/' + entry + '_backup')
+                            os.rename(self.nginx_config_location + '/' + entry, self.nginx_config_location + '/' + entry + '_backup')
                             changes = changes + 1
                         else:
                             # text = entry + " jest już " + Fore.RED + "wyłączone" + Fore.RESET
@@ -317,7 +270,7 @@ class MainWindow:
 
     def hostsFileChange(self, string, modeDisable):
         #file = open(os.getcwd() + '/' + self.hostsFileLocation, "r")
-        file = open(hostsFileLocation, "r")
+        file = open(self.hosts_file_location, "r")
         replaced_content = ""
         # looping through the file
         mapDictString = self.mapDict[string]
@@ -389,7 +342,7 @@ class MainWindow:
         file.close()
         #print(replaced_content)
         # Open file in write mode
-        write_file = open(hostsFileLocation, "w")
+        write_file = open(self.hosts_file_location, "w")
         # overwriting the old file contents with the new/replaced content
         write_file.write(replaced_content)
         # close the file

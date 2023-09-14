@@ -6,7 +6,7 @@ from colorama import Fore, Back, Style
 from datetime import datetime
 
 nginx_conf_location = '/etc/nginx/conf.d'
-
+hostsFileLocation = '/etc/hosts'
 
 class MainWindow:
     # name = []
@@ -18,6 +18,38 @@ class MainWindow:
         self.activeServices = []
         self.inactiveServices = []
         self.nginxStatus = ""
+        self.mapDict = {
+            'akad': [
+                'akad-dev.prv.put.poznan.pl',
+                'backend',
+                'akad-api-dev.prv.put.poznan.pl'
+            ],
+            'ether': 'ether.put.poznan.pl',
+            'ezasoby': 'ezasoby-dev.prv.put.poznan.pl',
+            'scms': [
+                'scms-awf-client.put.poznan.pl',
+                'www.scms-awf-client.put.poznan.pl',
+                'scms-client-hub.put.poznan.pl',
+                'ekarty.mcp.poznan.pl',
+                'www.scms.prv.put.poznan.pl',
+                'scms.prv.put.poznan.pl',
+                'scms-api.prv.put.poznan.pl'
+            ],
+            'all':[
+                'scms-awf-client.put.poznan.pl',
+                'www.scms-awf-client.put.poznan.pl',
+                'scms-client-hub.put.poznan.pl',
+                'ekarty.mcp.poznan.pl',
+                'www.scms.prv.put.poznan.pl',
+                'scms.prv.put.poznan.pl',
+                'scms-api.prv.put.poznan.pl',
+                'ezasoby-dev.prv.put.poznan.pl',
+                'ether.put.poznan.pl',
+                'akad-dev.prv.put.poznan.pl',
+                'backend',
+                'akad-api-dev.prv.put.poznan.pl'
+            ]
+        }
 
     def initializeWindow(self):
 
@@ -93,7 +125,7 @@ class MainWindow:
                             [sg.HorizontalSeparator()],
                             [sg.Button('Wyłącz SCMS', key='disableSCMS')]
                         ], expand_x=True)
-                    ],
+                    ]
 
                 ], expand_y=True, expand_x=True)
             ],
@@ -156,34 +188,46 @@ class MainWindow:
                 subprocess.call('service nginx restart', shell=True)
                 self.updateNginxData(set=True)
 
+            if event == "test":
+                self.hostsFileChange('akad', True)
+                # false to włącz, true to wyłącz
+
             if "enable" in event:
+                self.hostsFileChange('all', True)
                 event = event.lower()
                 if "akad" in event:
                     self.enable("akad")
+                    self.hostsFileChange("akad", False)
                 elif "scms" in event:
                     self.enable("scms")
-
+                    self.hostsFileChange("scms", False)
                 elif "ether" in event:
                     self.enable("ether")
+                    self.hostsFileChange("ether", False)
                 elif "ezasoby" in event:
                     self.enable("ezasoby")
+                    self.hostsFileChange("ezasoby", False)
                 elif "all" in event:
                     self.enable("all")
+                    self.hostsFileChange("all", False)
                 self.updateNginxData(set=True)
-
             if "disable" in event:
                 event = event.lower()
                 if "akad" in event:
                     self.disable("akad")
+                    self.hostsFileChange("akad", True)
                 elif "scms" in event:
                     self.disable("scms")
-
+                    self.hostsFileChange("scms", True)
                 elif "ether" in event:
                     self.disable("ether")
+                    self.hostsFileChange("ether", True)
                 elif "ezasoby" in event:
                     self.disable("ezasoby")
+                    self.hostsFileChange("ezasoby", True)
                 elif "all" in event:
                     self.disable("all")
+                    self.hostsFileChange("all", True)
                 self.updateNginxData(set=True)
 
         self.window.close()
@@ -299,6 +343,116 @@ class MainWindow:
             self.window['output'].update(tmstp + string + "\n", append=True)
         else:
             self.window['output'].update(string + "\n", append=True)
+
+    def hostsFileChange(self, string, modeDisable):
+        #file = open(os.getcwd() + '/' + self.hostsFileLocation, "r")
+        file = open(hostsFileLocation, "r")
+        replaced_content = ""
+        # looping through the file
+        mapDictString = self.mapDict[string]
+        # print("wchodze!")
+
+        for line in file:
+            # stripping line break
+            line = line.strip()
+
+            # replacing the texts
+            if isinstance(mapDictString, list):
+                #jazda tak samo jak by było pojedyńcze, i sprawdzamy czy pojedyńcza linia "podzielona"
+                temp_line = line
+                temp_line = temp_line.split(' ')
+                #sprawdzamy czy linie da sie podzielic
+                if len(temp_line) >= 2:
+                    name = temp_line[1]
+                    if name in mapDictString:
+                        #jezeli jest w arrayu sprawdzamy jaki mod jest wlaczony i co mamyz robić :)
+                        if modeDisable:
+                            # jeżeli mode jest disable, sprawdzanie czy jest wyłączone już
+                            if "#" in line:
+                                replaced_content = replaced_content + line + '\n'
+
+                            else:
+                                new_line = '#' + line
+                                replaced_content = replaced_content + new_line + "\n"
+
+                        else:
+
+                            if "#" in line:
+                                new_line = line.replace('#', '')
+                                replaced_content = replaced_content + new_line + '\n'
+
+                            else:
+                                replaced_content = replaced_content + line + '\n'
+                    else:
+                        #jezeli nie ma w arrayu przeklejamy dalej
+                        replaced_content = replaced_content + line+ '\n'
+                else:
+                    #jezeli sie nie da to jakiś śmieciowy opis
+                    replaced_content = replaced_content + line+ '\n'
+
+
+
+
+            elif isinstance(mapDictString, str):
+                if string in line:
+                    if modeDisable:
+                        # jeżeli mode jest disable, sprawdzanie czy jest wyłączone już
+                        if "#" in line:
+                            replaced_content = replaced_content + line + '\n'
+
+                        else:
+                            new_line = '#' + line
+                            replaced_content = replaced_content + new_line + "\n"
+
+                    else:
+
+                        if "#" in line:
+                            new_line = line.replace('#', '')
+                            replaced_content = replaced_content + new_line + '\n'
+
+                        else:
+                            replaced_content = replaced_content + line + '\n'
+
+                else:
+                    replaced_content = replaced_content + line + "\n"
+        file.close()
+        #print(replaced_content)
+        # Open file in write mode
+        write_file = open(hostsFileLocation, "w")
+        # overwriting the old file contents with the new/replaced content
+        write_file.write(replaced_content)
+        # close the file
+        write_file.close()
+
+    def checkOne(self, file, string, mode):
+        replaced_content = ""
+        for line in file:
+            line = line.strip()
+            print("lynijka")
+            print(line)
+            if string in line:
+                if mode:
+                    # jeżeli mode jest disable, sprawdzanie czy jest wyłączone już
+                    if "#" in line:
+                        return line + '\n'
+
+                    else:
+                        new_line = '#' + line
+                        return new_line + "\n"
+
+                else:
+
+                    if "#" in line:
+                        new_line = line.replace('#', '')
+                        return new_line + '\n'
+
+                    else:
+                        return line + '\n'
+
+            else:
+                return line + "\n"
+        return replaced_content
+
 
 
 mainWindow = MainWindow()

@@ -19,36 +19,7 @@ class MainWindow:
         self.inactiveServices = []
         self.nginxStatus = ""
         self.mapDict = {
-            'akad': [
-                'akad-dev.prv.put.poznan.pl',
-                'backend',
-                'akad-api-dev.prv.put.poznan.pl'
-            ],
-            'ether': 'ether.put.poznan.pl',
-            'ezasoby': 'ezasoby-dev.prv.put.poznan.pl',
-            'scms': [
-                'scms-awf-client.put.poznan.pl',
-                'www.scms-awf-client.put.poznan.pl',
-                'scms-client-hub.put.poznan.pl',
-                'ekarty.mcp.poznan.pl',
-                'www.scms.prv.put.poznan.pl',
-                'scms.prv.put.poznan.pl',
-                'scms-api.prv.put.poznan.pl'
-            ],
-            'all':[
-                'scms-awf-client.put.poznan.pl',
-                'www.scms-awf-client.put.poznan.pl',
-                'scms-client-hub.put.poznan.pl',
-                'ekarty.mcp.poznan.pl',
-                'www.scms.prv.put.poznan.pl',
-                'scms.prv.put.poznan.pl',
-                'scms-api.prv.put.poznan.pl',
-                'ezasoby-dev.prv.put.poznan.pl',
-                'ether.put.poznan.pl',
-                'akad-dev.prv.put.poznan.pl',
-                'backend',
-                'akad-api-dev.prv.put.poznan.pl'
-            ]
+
         }
 
     def initializeWindow(self):

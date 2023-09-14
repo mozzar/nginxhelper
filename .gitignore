@@ -20,4 +20,5 @@
 /build/nginx-helper/xref-nginx-helper.html
 /build
 main.py
+/dist/nginx-helper-settings.json
 /nginx-helper-settings.json

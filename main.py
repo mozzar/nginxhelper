@@ -4,7 +4,9 @@ import subprocess
 from lib.RepeatedTimer import RepeatedTimer
 from colorama import Fore, Back, Style
 from datetime import datetime
+
 from lib.Settings import Settings
+
 
 class MainWindow:
     # name = []
@@ -21,26 +23,25 @@ class MainWindow:
         self.hosts_file_location = settingsClass.get_setting('hosts_file_location')
         self.nginx_config_location = settingsClass.get_setting('nginx_config_location')
 
-
     def initializeWindow(self):
 
         self.updateNginxData()
 
         generateButtons = [
-                    [sg.Text('Opcje')],
-                ]
+            [sg.Text('Opcje')],
+        ]
         keys = self.mapDict.keys()
         for key in keys:
             name = key.upper()
             generateButtons.append([
-                        sg.Frame(name, [
+                sg.Frame(name, [
 
-                            [sg.Button('Włącz ' + name, key='enable' + name)],
-                            [sg.HorizontalSeparator()],
-                            [sg.Button('Wyłącz ' + name, key='disable' + name)],
+                    [sg.Button('Włącz ' + name, key='enable' + name)],
+                    [sg.HorizontalSeparator()],
+                    [sg.Button('Wyłącz ' + name, key='disable' + name)],
 
-                        ], expand_x=True)
-                    ])
+                ], expand_x=True)
+            ])
         self.layout = [
             [
                 sg.Column([
@@ -73,8 +74,6 @@ class MainWindow:
             ],
 
         ]
-
-
 
         sg.theme('BluePurple')
         self.window = sg.Window('NGINX menu', self.layout, size=(600, 600))
@@ -152,8 +151,6 @@ class MainWindow:
                 self.hostsFileChange(event, True)
                 self.updateNginxData(set=True)
 
-
-
         self.window.close()
 
     def enable(self, key_word):
@@ -215,7 +212,8 @@ class MainWindow:
                         text = "Wyłączam " + entry
                         print(text)
                         self.addToOutput(text)
-                        os.rename(self.nginx_config_location + '/' + entry, self.nginx_config_location + '/' + entry + '_backup')
+                        os.rename(self.nginx_config_location + '/' + entry,
+                                  self.nginx_config_location + '/' + entry + '_backup')
                         changes = changes + 1
                     else:
                         # text = entry + " jest już " + Fore.RED + "wyłączone" + Fore.RESET
@@ -231,7 +229,8 @@ class MainWindow:
                             text = "Wyłączam " + entry
                             print(text)
                             self.addToOutput(text)
-                            os.rename(self.nginx_config_location + '/' + entry, self.nginx_config_location + '/' + entry + '_backup')
+                            os.rename(self.nginx_config_location + '/' + entry,
+                                      self.nginx_config_location + '/' + entry + '_backup')
                             changes = changes + 1
                         else:
                             # text = entry + " jest już " + Fore.RED + "wyłączone" + Fore.RESET
@@ -269,7 +268,7 @@ class MainWindow:
             self.window['output'].update(string + "\n", append=True)
 
     def hostsFileChange(self, string, modeDisable):
-        #file = open(os.getcwd() + '/' + self.hostsFileLocation, "r")
+        # file = open(os.getcwd() + '/' + self.hostsFileLocation, "r")
         file = open(self.hosts_file_location, "r")
         replaced_content = ""
         # looping through the file
@@ -282,14 +281,14 @@ class MainWindow:
 
             # replacing the texts
             if isinstance(mapDictString, list):
-                #jazda tak samo jak by było pojedyńcze, i sprawdzamy czy pojedyńcza linia "podzielona"
+                # jazda tak samo jak by było pojedyńcze, i sprawdzamy czy pojedyńcza linia "podzielona"
                 temp_line = line
                 temp_line = temp_line.split(' ')
-                #sprawdzamy czy linie da sie podzielic
+                # sprawdzamy czy linie da sie podzielic
                 if len(temp_line) >= 2:
                     name = temp_line[1]
                     if name in mapDictString:
-                        #jezeli jest w arrayu sprawdzamy jaki mod jest wlaczony i co mamyz robić :)
+                        # jezeli jest w arrayu sprawdzamy jaki mod jest wlaczony i co mamyz robić :)
                         if modeDisable:
                             # jeżeli mode jest disable, sprawdzanie czy jest wyłączone już
                             if "#" in line:
@@ -308,11 +307,11 @@ class MainWindow:
                             else:
                                 replaced_content = replaced_content + line + '\n'
                     else:
-                        #jezeli nie ma w arrayu przeklejamy dalej
-                        replaced_content = replaced_content + line+ '\n'
+                        # jezeli nie ma w arrayu przeklejamy dalej
+                        replaced_content = replaced_content + line + '\n'
                 else:
-                    #jezeli sie nie da to jakiś śmieciowy opis
-                    replaced_content = replaced_content + line+ '\n'
+                    # jezeli sie nie da to jakiś śmieciowy opis
+                    replaced_content = replaced_content + line + '\n'
 
 
 
@@ -340,7 +339,7 @@ class MainWindow:
                 else:
                     replaced_content = replaced_content + line + "\n"
         file.close()
-        #print(replaced_content)
+        # print(replaced_content)
         # Open file in write mode
         write_file = open(self.hosts_file_location, "w")
         # overwriting the old file contents with the new/replaced content
@@ -352,8 +351,6 @@ class MainWindow:
         replaced_content = ""
         for line in file:
             line = line.strip()
-            print("lynijka")
-            print(line)
             if string in line:
                 if mode:
                     # jeżeli mode jest disable, sprawdzanie czy jest wyłączone już
@@ -376,7 +373,6 @@ class MainWindow:
             else:
                 return line + "\n"
         return replaced_content
-
 
 
 mainWindow = MainWindow()
